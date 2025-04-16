@@ -1,6 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import express, { Request, Response } from "express";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 
 // Constants
 const HEALTHGOV_API_BASE = "https://health.gov/myhealthfinder/api/v3";
@@ -625,13 +627,63 @@ export async function runServer(options?: {
     endpoint?: string;
 }): Promise<void> {
     // Get configuration from options or environment variables
-    const mode = options?.mode || process.env.MCP_MODE || "stdio";
-    const port = options?.port || parseInt(process.env.MCP_PORT || "9593");
-    const endpoint = options?.endpoint || process.env.MCP_ENDPOINT || "/rest";
+    const mode = options?.mode || process.env.MCP_MODE || "sse";
+    const port = options?.port || parseInt(process.env.MCP_PORT || "3001");
+    const endpoint = options?.endpoint || process.env.MCP_ENDPOINT || "/sse";
 
     try {
-        // Check if mode is REST and if the REST module is available
-        if (mode === "rest") {
+        // Check if mode is SSE and set up SSE server
+        if (mode === "sse") {
+            try {
+                console.error(`Setting up SSE server on port ${port} with endpoint ${endpoint}`);
+                const app = express();
+                const transportMap = new Map<string, SSEServerTransport>();
+
+                app.get(endpoint, async (req: Request, res: Response) => {
+                    console.error(`Received SSE connection request from ${req.ip}`);
+                    // Create the full URL for messages endpoint
+                    const messagesUrl = `/messages`;
+                    console.error(`Creating SSE transport with messagesUrl=${messagesUrl}`);
+                    const transport = new SSEServerTransport(messagesUrl, res);
+                    console.error(`Created SSE transport with sessionId=${transport.sessionId}`);
+                    transportMap.set(transport.sessionId, transport);
+                    await server.connect(transport);
+                    console.error(`Connected transport with sessionId=${transport.sessionId} to MCP server`);
+                });
+
+                app.post("/messages", (req: Request, res: Response) => {
+                    const sessionId = req.query.sessionId as string;
+                    console.error(`Received message for sessionId=${sessionId}`);
+                    if (!sessionId) {
+                        console.error('Message received without sessionId');
+                        res.status(400).json({ error: 'sessionId is required' });
+                        return;
+                    }
+
+                    const transport = transportMap.get(sessionId);
+                    if (transport) {
+                        console.error(`Found transport for sessionId=${sessionId}, handling message`);
+                        transport.handlePostMessage(req, res);
+                    } else {
+                        console.error(`No transport found for sessionId=${sessionId}`);
+                        res.status(404).json({ error: 'Session not found' });
+                    }
+                });
+
+                app.listen(port, () => {
+                    console.error(`Healthcare MCP Server running in SSE mode on port ${port} with endpoint ${endpoint}`);
+                    console.error(`SSE URL: http://localhost:${port}${endpoint}`);
+                    console.error(`Messages URL: http://localhost:${port}/messages`);
+                });
+                return;
+            } catch (error) {
+                console.error("Failed to initialize SSE transport:", error);
+                console.error("Falling back to stdio mode.");
+                // Fall back to stdio mode if SSE transport is not available
+            }
+        }
+        // Check if mode is REST (legacy support)
+        else if (mode === "rest") {
             try {
                 // Dynamically import the REST transport module
                 const { RestServerTransport } = await import("@chatmcp/sdk/server/rest.js");
