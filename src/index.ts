@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import express, { Request, Response } from "express";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import cors from 'cors';
 
 // Constants
 const HEALTHGOV_API_BASE = "https://health.gov/myhealthfinder/api/v3";
@@ -639,6 +640,13 @@ export async function runServer(options?: {
                 const app = express();
                 const transportMap = new Map<string, SSEServerTransport>();
 
+                // Enable CORS for all origins
+                app.use(cors({
+                    origin: '*',
+                    methods: ['GET', 'POST', 'OPTIONS'],
+                    allowedHeaders: ['Content-Type', 'Authorization']
+                }));
+
                 // Add root endpoint for landing page
                 app.get("/", (req: Request, res: Response) => {
                     const landingPage = `
@@ -833,6 +841,12 @@ Parameters:
 
                 app.get(endpoint, async (req: Request, res: Response) => {
                     console.error(`Received SSE connection request from ${req.ip}`);
+                    
+                    // Set headers for SSE
+                    res.setHeader('Content-Type', 'text/event-stream');
+                    res.setHeader('Cache-Control', 'no-cache');
+                    res.setHeader('Connection', 'keep-alive');
+                    
                     // Create the full URL for messages endpoint
                     const messagesUrl = `/messages`;
                     console.error(`Creating SSE transport with messagesUrl=${messagesUrl}`);
@@ -860,6 +874,17 @@ Parameters:
                         console.error(`No transport found for sessionId=${sessionId}`);
                         res.status(404).json({ error: 'Session not found' });
                     }
+                });
+
+                // Add health check endpoint
+                app.get("/health", (req: Request, res: Response) => {
+                    res.json({
+                        status: "ok",
+                        serverMode: mode,
+                        sseEndpoint: `${req.protocol}://${req.get('host')}${endpoint}`,
+                        messagesEndpoint: `${req.protocol}://${req.get('host')}/messages`,
+                        serverTime: new Date().toISOString()
+                    });
                 });
 
                 app.listen(port, () => {
