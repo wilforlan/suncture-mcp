@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
-import { runServer } from './index.js';
+import { runServer } from "./index.js";
 
-// Run the server when the binary is executed
-runServer()
-  .catch((error: unknown) => {
-    console.error("Fatal error in bin.js:", error);
+// Run the server when executed directly
+runServer().catch((error) => {
+    console.error("Fatal error in bin.ts:", error);
     process.exit(1);
-  }); 
+}); 
