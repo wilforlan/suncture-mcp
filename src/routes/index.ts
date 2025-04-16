@@ -27,7 +27,7 @@ router.get("/", (req: Request, res: Response) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Suncture Healthcare MCP</title>
+        <title>Suncture Corp MCP</title>
         <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=outer-sans@1,800,500,400,700,600&display=swap">
         <link rel="stylesheet" href="/tailwind.css">
         <style>
@@ -43,7 +43,7 @@ router.get("/", (req: Request, res: Response) => {
                             <h1 class="text-3xl font-bold text-secondary-900">@</h1>
                         </div>
                         <div class="ml-4">
-                            <h1 class="text-3xl font-bold text-secondary-900">Suncture Healthcare</h1>
+                            <h1 class="text-3xl font-bold text-secondary-900">Suncture Corp.</h1>
                             <p class="text-secondary-600">Model Context Protocol Server</p>
                         </div>
                     </div>
@@ -363,7 +363,7 @@ Parameters:
                         <svg class="h-8 w-8 text-primary-600" viewBox="0 0 40 40" fill="currentColor">
                             <path d="M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331Z"/>
                         </svg>
-                        <p class="ml-3 text-secondary-600">© ${new Date().getFullYear()} Suncture Corp (suncture.io). All rights reserved.</p>
+                        <p class="ml-3 text-secondary-600">© ${new Date().getFullYear()} Suncture Corp. All rights reserved.</p>
                     </div>
                     <div class="mt-8 md:mt-0">
                         <p class="text-secondary-600 text-sm">
