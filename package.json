@@ -4,17 +4,38 @@
   "description": "Healthcare MCP Server with medical tools for AI assistants",
   "main": "dist/index.js",
   "type": "module",
+  "bin": {
+    "suncture-healthcare-mcp": "./dist/bin.js"
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/fix-shebangs.js",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts"
+    "dev": "ts-node src/index.ts",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "lint": "eslint src/**/*.ts",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wilforlan/suncture-mcp.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "healthcare",
     "mcp",
     "medical",
     "ai",
-    "assistant"
+    "assistant",
+    "claude",
+    "model-context-protocol"
   ],
   "author": "",
   "license": "MIT",
@@ -25,7 +46,13 @@
   },
   "devDependencies": {
     "@types/node": "^20.5.0",
+    "eslint": "^8.47.0",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

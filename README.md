@@ -2,6 +2,9 @@
 
 A Model Context Protocol (MCP) server that provides healthcare-related tools for AI assistants, enabling them to offer practical healthcare information to users.
 
+[![npm version](https://img.shields.io/npm/v/suncture-healthcare-mcp.svg)](https://www.npmjs.com/package/suncture-healthcare-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Features
 
 This MCP server includes the following healthcare tools:
@@ -18,12 +21,26 @@ This MCP server includes the following healthcare tools:
 
 ## Installation
 
+### NPM Package Installation
+
+You can install the package globally:
+
+```bash
+npm install -g suncture-healthcare-mcp
+```
+
+Or as a project dependency:
+
+```bash
+npm install suncture-healthcare-mcp
+```
+
 ### Prerequisites
 
 - Node.js (v18 or later)
 - npm (v7 or later)
 
-### Local Installation
+### Local Development
 
 ```bash
 # Clone the repository
@@ -40,6 +57,44 @@ npm run build
 npm start
 ```
 
+## Usage
+
+### Command Line Usage
+
+If installed globally, you can run the server directly from the command line:
+
+```bash
+suncture-healthcare-mcp
+```
+
+You can configure the server using environment variables:
+
+```bash
+# Run in REST mode
+MCP_MODE=rest MCP_PORT=8080 suncture-healthcare-mcp
+```
+
+### Programmatic Usage
+
+You can also use the package programmatically in your Node.js applications:
+
+```javascript
+import { server, runServer } from 'suncture-healthcare-mcp';
+
+// Run with default settings (stdio mode)
+runServer();
+
+// Or with custom settings
+runServer({
+  mode: 'rest',    // 'stdio' or 'rest'
+  port: 8080,      // Only used in REST mode
+  endpoint: '/api' // Only used in REST mode
+});
+
+// You can also access the server instance directly
+console.log(server.name); // 'suncture-healthcare'
+```
+
 ## Usage with MCP-enabled AI Models
 
 This MCP server can be used with AI models that support the Model Context Protocol. The server exposes healthcare-related tools that can be called by the model to provide information to users.
@@ -54,8 +109,8 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 // Connect to the healthcare MCP server
 const healthcareMcp = new Client({ name: "healthcare-client", version: "1.0.0" });
 const transport = new StdioClientTransport({
-  command: "node",
-  args: ["dist/index.js"],
+  command: "suncture-healthcare-mcp", // Use the installed package
+  args: [],
 });
 healthcareMcp.connect(transport);
 

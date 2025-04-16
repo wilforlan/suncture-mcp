@@ -2,41 +2,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-// Use a try-catch block to handle potential import errors gracefully
-let RestServerTransport: any;
-let getParamValue: any;
-let getAuthValue: any;
-
-try {
-  // Try to import from @chatmcp/sdk
-  const { RestServerTransport: Rest } = await import("@chatmcp/sdk/server/rest.js");
-  const { getParamValue: getParam, getAuthValue: getAuth } = await import("@chatmcp/sdk/utils/index.js");
-  
-  RestServerTransport = Rest;
-  getParamValue = getParam;
-  getAuthValue = getAuth;
-} catch (error) {
-  console.error("Warning: @chatmcp/sdk modules not found. REST transport will not be available.");
-  // Provide fallback implementations for standalone use
-  RestServerTransport = class {
-    constructor() { throw new Error("REST transport not available"); }
-  };
-  getParamValue = (_key: string) => null;
-  getAuthValue = (_request: any, _key: string) => null;
-}
-
+// Constants
 const HEALTHGOV_API_BASE = "https://health.gov/myhealthfinder/api/v3";
 const FDA_API_BASE = "https://api.fda.gov/drug";
 const NIH_MED_API_BASE = "https://clinicaltables.nlm.nih.gov/api/conditions/v3/search";
 const USER_AGENT = "healthcare-assistant/1.0";
 
-// Read mode from environment or command line 
-const mode = process.env.MCP_MODE || "stdio";
-const port = parseInt(process.env.MCP_PORT || "9593");
-const endpoint = process.env.MCP_ENDPOINT || "/rest";
-
-// Create server instance
-const server = new McpServer({
+// Server instance - exported for potential programmatic use
+export const server = new McpServer({
     name: "suncture-healthcare",
     version: "1.0.0",
     capabilities: {
@@ -64,6 +37,7 @@ async function makeApiRequest<T>(url: string): Promise<T | null> {
     }
 }
 
+// Interfaces
 interface HealthRecommendation {
     Title?: string;
     MyHFDescription?: string;
@@ -80,17 +54,6 @@ interface HealthGovResponse {
             Resource?: HealthRecommendation[];
         };
     };
-}
-
-// Format health recommendation data
-function formatHealthRecommendation(recommendation: HealthRecommendation): string {
-    return [
-        `Title: ${recommendation.Title || "Unknown"}`,
-        `Target Population: ${recommendation.PopulationData?.PopulationGroup || "General population"}`,
-        `Summary: ${recommendation.RecommendationSummary || "No summary available"}`,
-        `Description: ${recommendation.MyHFDescription || "No description available"}`,
-        "---",
-    ].join("\n");
 }
 
 interface MedicationInfo {
@@ -118,6 +81,17 @@ interface DiseaseSymptom {
     overview?: string;
     treatment?: string;
     prevention?: string;
+}
+
+// Format health recommendation data
+function formatHealthRecommendation(recommendation: HealthRecommendation): string {
+    return [
+        `Title: ${recommendation.Title || "Unknown"}`,
+        `Target Population: ${recommendation.PopulationData?.PopulationGroup || "General population"}`,
+        `Summary: ${recommendation.RecommendationSummary || "No summary available"}`,
+        `Description: ${recommendation.MyHFDescription || "No description available"}`,
+        "---",
+    ].join("\n");
 }
 
 // Mock database for common diseases and symptoms
@@ -488,7 +462,7 @@ server.tool(
         age: z.number().min(0).max(120).describe("Age of the person in years"),
         sex: z.enum(["male", "female"]).describe("Biological sex of the person"),
     },
-    async ({ symptoms, duration, severity, age, sex }) => {
+    async ({ symptoms, duration, severity, age }) => {
         // Normalize symptoms to lowercase for matching
         const normalizedSymptoms = symptoms.map(s => s.toLowerCase().trim());
         
@@ -640,7 +614,21 @@ server.tool(
     },
 );
 
-async function runServer() {
+/**
+ * Run the MCP server
+ * @param options Optional server configuration options
+ * @returns A promise that resolves when the server is running
+ */
+export async function runServer(options?: {
+    mode?: string;
+    port?: number;
+    endpoint?: string;
+}): Promise<void> {
+    // Get configuration from options or environment variables
+    const mode = options?.mode || process.env.MCP_MODE || "stdio";
+    const port = options?.port || parseInt(process.env.MCP_PORT || "9593");
+    const endpoint = options?.endpoint || process.env.MCP_ENDPOINT || "/rest";
+
     try {
         // Check if mode is REST and if the REST module is available
         if (mode === "rest") {
@@ -668,11 +656,14 @@ async function runServer() {
         console.error("Healthcare MCP Server running on stdio");
     } catch (error) {
         console.error("Fatal error running server:", error);
-        process.exit(1);
+        throw error; // Rethrow to allow calling code to handle errors
     }
 }
 
-runServer().catch((error) => {
-    console.error("Fatal error in main():", error);
-    process.exit(1);
-});
+// Auto-run the server if this file is executed directly (not imported as a module)
+if (import.meta.url === `file://${process.argv[1]}`) {
+    runServer().catch((error) => {
+        console.error("Fatal error in main():", error);
+        process.exit(1);
+    });
+}
