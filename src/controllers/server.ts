@@ -6,6 +6,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { ServerOptions } from "../types/index.js";
 import routes from "../routes/index.js";
+import fs from 'fs';
 
 // Get the directory name of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -27,9 +28,18 @@ export function configureExpressApp(server: McpServer) {
         allowedHeaders: ['Content-Type', 'Authorization']
     }));
 
-    // Serve static files - with proper path resolution
-    const publicPath = path.join(__dirname, '../../src/public');
-    app.use('/static', express.static(publicPath));
+    // Serve static files - with proper path resolution for both dev and prod environments
+    const distPublicPath = path.join(__dirname, '../../dist/public');
+    const srcPublicPath = path.join(__dirname, '../../src/public');
+    
+    // Check if we're running in production (dist directory) or development
+    if (fs.existsSync(distPublicPath)) {
+        console.log('Serving static files from dist/public directory');
+        app.use('/static', express.static(distPublicPath));
+    } else {
+        console.log('Serving static files from src/public directory');
+        app.use('/static', express.static(srcPublicPath));
+    }
 
     // Use the routes defined in routes/index.ts
     app.use('/', routes);
