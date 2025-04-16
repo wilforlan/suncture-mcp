@@ -639,6 +639,198 @@ export async function runServer(options?: {
                 const app = express();
                 const transportMap = new Map<string, SSEServerTransport>();
 
+                // Add root endpoint for landing page
+                app.get("/", (req: Request, res: Response) => {
+                    const landingPage = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Suncture Healthcare MCP</title>
+                        <style>
+                            body {
+                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                                line-height: 1.6;
+                                color: #333;
+                                max-width: 1000px;
+                                margin: 0 auto;
+                                padding: 20px;
+                            }
+                            h1, h2, h3 {
+                                color: #0066cc;
+                            }
+                            .header {
+                                border-bottom: 1px solid #eee;
+                                padding-bottom: 20px;
+                                margin-bottom: 20px;
+                            }
+                            .footer {
+                                margin-top: 40px;
+                                padding-top: 20px;
+                                border-top: 1px solid #eee;
+                                font-size: 0.9em;
+                                color: #666;
+                            }
+                            code {
+                                background-color: #f4f4f4;
+                                padding: 2px 6px;
+                                border-radius: 4px;
+                                font-family: Consolas, Monaco, 'Andale Mono', monospace;
+                            }
+                            pre {
+                                background-color: #f4f4f4;
+                                padding: 15px;
+                                border-radius: 6px;
+                                overflow: auto;
+                            }
+                            .tool {
+                                margin-bottom: 30px;
+                                padding: 15px;
+                                background-color: #f9f9f9;
+                                border-radius: 8px;
+                                border-left: 4px solid #0066cc;
+                            }
+                            .benefits {
+                                display: grid;
+                                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                                gap: 20px;
+                                margin: 30px 0;
+                            }
+                            .benefit-card {
+                                padding: 20px;
+                                background-color: #f0f7ff;
+                                border-radius: 8px;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>Suncture Healthcare MCP</h1>
+                            <p>A Model Context Protocol (MCP) server with powerful healthcare tools for AI assistants</p>
+                        </div>
+
+                        <section>
+                            <h2>Overview</h2>
+                            <p>
+                                Suncture Healthcare MCP provides a set of specialized healthcare tools that can be integrated with
+                                AI models to enhance their capabilities in delivering accurate, reliable healthcare information and guidance.
+                                Using the Model Context Protocol, AI assistants can access these tools to provide more valuable 
+                                healthcare information to users.
+                            </p>
+                        </section>
+
+                        <section>
+                            <h2>Key Benefits</h2>
+                            <div class="benefits">
+                                <div class="benefit-card">
+                                    <h3>Enhanced Healthcare Capabilities</h3>
+                                    <p>Extend AI assistants with specialized healthcare tools, providing more accurate and detailed medical information.</p>
+                                </div>
+                                <div class="benefit-card">
+                                    <h3>Expert Knowledge</h3>
+                                    <p>Access medical databases and resources with vetted, reliable healthcare information.</p>
+                                </div>
+                                <div class="benefit-card">
+                                    <h3>User-Friendly Interface</h3>
+                                    <p>Simple integration through the Model Context Protocol makes implementation straightforward.</p>
+                                </div>
+                                <div class="benefit-card">
+                                    <h3>Secure & Private</h3>
+                                    <p>Built with strong security protocols to maintain privacy of health-related queries.</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h2>Available Tools</h2>
+                            
+                            <div class="tool">
+                                <h3>Health Recommendations</h3>
+                                <p>Get personalized health screening and preventive care recommendations based on age, sex, and pregnancy status.</p>
+                                <pre><code>Tool: get-health-recommendations
+Parameters:
+- age: number (0-120)
+- sex: "male" | "female"
+- pregnant: boolean (optional)</code></pre>
+                            </div>
+                            
+                            <div class="tool">
+                                <h3>Medication Information</h3>
+                                <p>Look up detailed information about medications, including usage, dosage, warnings, and side effects.</p>
+                                <pre><code>Tool: lookup-medication
+Parameters:
+- medicationName: string</code></pre>
+                            </div>
+                            
+                            <div class="tool">
+                                <h3>Disease & Condition Information</h3>
+                                <p>Find information about various diseases and medical conditions, including symptoms, treatments, and prevention.</p>
+                                <pre><code>Tool: find-disease-info
+Parameters:
+- condition: string</code></pre>
+                            </div>
+                            
+                            <div class="tool">
+                                <h3>BMI Calculator</h3>
+                                <p>Calculate Body Mass Index (BMI) and receive health recommendations based on the results.</p>
+                                <pre><code>Tool: calculate-bmi
+Parameters:
+- weight: number (in kg)
+- height: number (in meters)
+- age: number (optional)
+- sex: "male" | "female" (optional)</code></pre>
+                            </div>
+                            
+                            <div class="tool">
+                                <h3>Symptom Checker</h3>
+                                <p>Check common symptoms and receive preliminary advice on potential conditions and when to seek care.</p>
+                                <pre><code>Tool: symptom-checker
+Parameters:
+- symptoms: string[]
+- duration: "hours" | "days" | "weeks" | "months"
+- severity: "mild" | "moderate" | "severe"
+- age: number
+- sex: "male" | "female"</code></pre>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h2>Integration</h2>
+                            <p>
+                                To integrate the Suncture Healthcare MCP with your AI application:
+                            </p>
+                            <ol>
+                                <li>Connect to the SSE endpoint at <code>${req.protocol}://${req.get('host')}${endpoint}</code></li>
+                                <li>Send messages to <code>${req.protocol}://${req.get('host')}/messages?sessionId=[SESSION_ID]</code></li>
+                                <li>Use the MCP client library to simplify integration</li>
+                            </ol>
+                            <p>For detailed implementation instructions, please refer to our documentation.</p>
+                        </section>
+
+                        <section>
+                            <h2>Server Information</h2>
+                            <ul>
+                                <li><strong>Server Name:</strong> suncture-healthcare</li>
+                                <li><strong>Version:</strong> 1.0.0</li>
+                                <li><strong>SSE Endpoint:</strong> <code>${req.protocol}://${req.get('host')}${endpoint}</code></li>
+                                <li><strong>Messages Endpoint:</strong> <code>${req.protocol}://${req.get('host')}/messages</code></li>
+                                <li><strong>Transport Type:</strong> SSE (Server-Sent Events)</li>
+                            </ul>
+                        </section>
+
+                        <div class="footer">
+                            <p>© ${new Date().getFullYear()} Suncture Healthcare MCP. All rights reserved.</p>
+                            <p>Disclaimer: This tool provides general health information for educational purposes only and is not a substitute for professional medical advice.</p>
+                        </div>
+                    </body>
+                    </html>
+                    `;
+                    
+                    res.setHeader('Content-Type', 'text/html');
+                    res.send(landingPage);
+                });
+
                 app.get(endpoint, async (req: Request, res: Response) => {
                     console.error(`Received SSE connection request from ${req.ip}`);
                     // Create the full URL for messages endpoint
